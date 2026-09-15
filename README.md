@@ -4,11 +4,11 @@ Spatial feature extraction via 1D convolutions combines with recurrent LSTM laye
 ## Project capabilities
 
 - Multi-station time-series preprocessing and chronological train/validation/test splitting
-- LSTM and CNN-LSTM forecasting pipelines
-- N-BEATS variants for CO2, AQI, and temperature prediction
-- Transformer experiments for horizons from 15 minutes to 24 hours
+- CNN-LSTM forecasting pipelines
+- Variants for CO2, AQI, and temperature prediction
+- Experiments for horizons from 15 minutes to 24 hours
 - Optional wavelet-scattering features using Kymatio
-- Optional temporal attention in the LSTM and CNN-LSTM models
+- Optional temporal attention in the CNN-LSTM models
 - Explainable AI using SHAP, permutation feature importance, and Integrated Gradients
 - Predictive uncertainty using Monte Carlo dropout and deep ensembles
 - Evaluation with MSE, MAE, RMSE, R-squared, and per-horizon metrics
@@ -35,11 +35,9 @@ It contains approximately **1.9 million observations** from multiple indoor moni
 | SFA30 | temperature, humidity, formaldehyde (HCO) |
 | Metadata | record ID, station ID, station name, timestamp |
 
-The file `data/AIQStationsDocumentation 2.pdf` contains supporting station documentation.
-
 ### Default model features
 
-The current LSTM and CNN-LSTM CO2 pipelines use:
+The current CNN-LSTM CO2 pipelines use:
 
 - `ens160_aqi`
 - `ens160_tvoc`
@@ -61,28 +59,22 @@ The default target is `scd41_co2`.
 TSA/
 ├── data/
 │   ├── indoorAir2.csv
-│   └── AIQStationsDocumentation 2.pdf
 ├── src/
-│   ├── LSTM/                 # Modular LSTM pipeline
 │   ├── CNN_LSTM/             # Modular CNN-LSTM pipeline
-│   └── N-BEATS/              # N-BEATS model variants
 ├── notebooks/
 │   ├── EDA.ipynb
-│   ├── LSTM and CNN_LSTM Notebook/
-│   ├── N-BEATS/
-│   ├── Transformer/
-│   └── Transformer_new/
-├── Transformer_Results/      # Saved Transformer artifacts
-├── dataPipeline_LSTM_co2.py
+│   ├── CNN_LSTM Notebook/
+├── Results/
+│   ├── Experiment_With_LR_0.0001   # All results With Image 
+│   ├── Experiment_With_LR_0.0005   # All results With Image 
+│   ├── Results_in_Matrix           # Results In Numerical_Values 
 ├── dataPipeline_CNN_LSTM_co2.py
-├── data_pipeline_NBEATS.py
-├── dataPipeline_LSTM_old.py
 ├── dataPipeline_CNN_LSTM_old.py
 ├── requirement.yml
 └── README.md
 ```
 
-Files containing `_old` are retained legacy pipelines. For current LSTM and CNN-LSTM work, use the `_co2.py` entry points.
+Files containing `_old` are retained legacy pipelines. For current CNN-LSTM work, use the `_co2.py` entry points.
 
 ## Installation
 
@@ -93,7 +85,7 @@ The project uses Python 3.11 and the Conda environment name `torch-env`.
 From the project directory:
 
 ```bash
-cd "/Volumes/Hackintosh - Data/Users/Manvi/TSA"
+cd "/Volumes/Hackintosh - Data/Users/Kenil Dhorajiya/TSA"
 conda env create -f requirement.yml
 conda activate torch-env
 ```
@@ -127,34 +119,12 @@ The environment includes PyTorch, TensorFlow, NeuralForecast, NumPy, pandas, Sci
 
 Always run commands from the repository root so local `src` imports and data paths resolve correctly.
 
-### LSTM CO2 pipeline
-
-```bash
-conda activate torch-env
-python dataPipeline_LSTM_co2.py
-```
-
-This entry point performs data loading, preprocessing, LSTM training, evaluation, and—by default—SHAP/PFI/Integrated Gradients, Monte Carlo dropout, and deep-ensemble analysis.
-
 ### CNN-LSTM CO2 pipeline
 
 ```bash
 conda activate torch-env
 python dataPipeline_CNN_LSTM_co2.py
 ```
-
-This runs the equivalent workflow using a convolutional front end followed by an LSTM model.
-
-### N-BEATS pipeline
-
-```bash
-python data_pipeline_NBEATS.py
-```
-
-The active section currently runs short-term CO2 prediction. Other variants in the file can be enabled for long-term forecasts, syN-BEATS, wavelet N-BEATS, fixed horizons, explainability/uncertainty, AQI, and temperature.
-
-> **Current N-BEATS path note:** `data_pipeline_NBEATS.py` imports `src.N_BEATS`, while the repository directory is named `src/N-BEATS`. Python package names cannot contain a hyphen. Rename that directory to `src/N_BEATS` (and add `__init__.py` files if needed) before using this entry point, or update its import strategy.
-
 ### Jupyter notebooks
 
 Start JupyterLab with:
@@ -165,23 +135,23 @@ jupyter lab
 
 The notebooks include:
 
-- exploratory data analysis
-- step-by-step LSTM and CNN-LSTM development
-- N-BEATS forecasting and uncertainty experiments
+- Exploratory data analysis
+- Step-by-step CNN-LSTM development
+- Forecasting and uncertainty experiments
 - SHAP, Integrated Gradients, and permutation feature importance
-- Transformer forecasts at 15-minute, 2-hour, 4-hour, 6-hour, 12-hour, and 24-hour horizons
-- wavelet-scattering and Transformer/BiLSTM experiments
+- Forecasts at 15-minute, 2-hour, 4-hour, 6-hour, 12-hour, and 24-hour horizons
+- Wavelet-scattering and Transformer/BiLSTM experiments
 
 Some notebooks contain saved outputs or historical experiment paths. Check each notebook's data path and selected Jupyter kernel before running all cells.
 
 ## Preprocessing workflow
 
-The modular LSTM and CNN-LSTM pipelines currently:
+The modular CNN-LSTM pipelines currently:
 
 1. Load `data/indoorAir2.csv`.
 2. Convert Unix timestamps to pandas datetimes.
 3. Sort readings by station and time.
-4. Exclude station 6 to match the N-BEATS preprocessing convention.
+4. Exclude station 6 to match the preprocessing convention.
 5. Resample each station to 15-minute intervals by default.
 6. Interpolate and fill selected missing sensor values within each station.
 7. Add cyclical hour and weekday features plus a weekend flag.
@@ -191,7 +161,7 @@ The modular LSTM and CNN-LSTM pipelines currently:
 
 Chronological splitting is important: future observations are not randomly mixed into the training set.
 
-## Default LSTM and CNN-LSTM settings
+## Default CNN-LSTM settings
 
 | Setting | Default |
 |---|---:|
@@ -216,7 +186,6 @@ With a 15-minute sampling interval, 192 input steps represent 48 hours of histor
 Configuration is defined in:
 
 ```text
-src/LSTM/LSTM_config.py
 src/CNN_LSTM/CNN_LSTM_config.py
 ```
 
@@ -224,7 +193,7 @@ Model functions also accept keyword arguments, allowing experiment-specific over
 
 ## Optional pipeline stages
 
-At the top of `dataPipeline_LSTM_co2.py` and `dataPipeline_CNN_LSTM_co2.py`, these switches control additional work:
+At the top of `dataPipeline_CNN_LSTM_co2.py`, these switches control additional work:
 
 ```python
 RUN_EXPLAINABILITY = True
@@ -237,7 +206,7 @@ Explainability and ensemble stages can be computationally expensive. Set unwante
 
 ## Explainability
 
-The LSTM and CNN-LSTM modules support:
+The CNN-LSTM modules support:
 
 - **SHAP:** estimates feature contributions to model predictions
 - **Permutation feature importance:** measures performance degradation after shuffling a feature
@@ -265,7 +234,7 @@ Forecasting performance is evaluated with:
 - coefficient of determination (R-squared)
 - per-horizon metrics for multi-step forecasting
 
-LSTM and CNN-LSTM runs create a uniquely named directory in the project root. The name records major hyperparameters such as input/output length, batch size, epochs, learning rate, hidden size, resampling interval, dropout, gap handling, station encoding, scattering, and attention.
+CNN-LSTM runs create a uniquely named directory in the project root. The name records major hyperparameters such as input/output length, batch size, epochs, learning rate, hidden size, resampling interval, dropout, gap handling, station encoding, scattering, and attention.
 
 A typical results directory contains:
 
@@ -279,8 +248,6 @@ A typical results directory contains:
 ├── mc_dropout/               # MC-dropout uncertainty
 └── deep_ensemble/            # Ensemble uncertainty
 ```
-
-`Transformer_Results/` contains saved Transformer metrics, predictions, uncertainty arrays, feature-importance outputs, plots, and `.pth` checkpoints from existing experiments.
 
 ## Hardware acceleration
 
@@ -315,8 +282,6 @@ Activate the correct environment and run from the project root:
 conda activate torch-env
 conda env update -n torch-env -f requirement.yml
 ```
-
-For the N-BEATS-specific `src.N_BEATS` error, see the directory-name note in the N-BEATS section.
 
 ### Jupyter uses the wrong Python environment
 
